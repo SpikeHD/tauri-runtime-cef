@@ -57,6 +57,10 @@ pub struct CefConfig {
   pub cookieable_schemes: Vec<String>,
   /// Linux window system. Ignored on other platforms.
   pub linux_windowing: LinuxWindowing,
+  /// X11 only. Size in pixels of the client-side-decorations resize border
+  /// advertised via `_GTK_FRAME_EXTENTS` while a window's decorations are
+  /// disabled.
+  pub linux_csd_resize_border: u32,
 }
 
 impl Default for CefConfig {
@@ -72,6 +76,7 @@ impl Default for CefConfig {
       custom_schemes: vec!["tauri".into(), "ipc".into(), "asset".into()],
       cookieable_schemes: Vec::new(),
       linux_windowing: LinuxWindowing::X11,
+      linux_csd_resize_border: 4,
     }
   }
 }
