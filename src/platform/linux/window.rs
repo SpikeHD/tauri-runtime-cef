@@ -9,7 +9,10 @@ use tauri_utils::config::Color;
 
 use crate::window::AppWindow;
 
-use super::{taskbar, utils::set_wm_state};
+use super::{
+  taskbar,
+  utils::{atom, set_wm_state, with_x11},
+};
 
 impl AppWindow {
   pub(crate) fn raw_cef_handle(&self) -> cef::sys::cef_window_handle_t {
@@ -107,6 +110,48 @@ impl AppWindow {
 
   pub(crate) fn set_progress_bar(&self, state: ProgressBarState) {
     taskbar::set_progress_bar(state);
+  }
+
+  /// Re-advertise the client-side-decorations resize border to match the
+  /// window's current decoration and resize state.
+  pub(crate) fn sync_csd_frame_extents(&self) {
+    #[cfg(target_os = "linux")]
+    if crate::config::native_wayland() {
+      return;
+    }
+
+    let border = if self.window.is_resizable() && !self.window.is_decorated() {
+      crate::config::config().linux_csd_resize_border
+    } else {
+      0
+    };
+
+    let xid = self.xid();
+    with_x11((), |xlib, display| {
+      let prop = atom(xlib, display, "_GTK_FRAME_EXTENTS");
+
+      if border == 0 {
+        unsafe {
+          (xlib.XDeleteProperty)(display, xid, prop);
+        }
+        return;
+      }
+
+      // `_GTK_FRAME_EXTENTS` is `left, right, top, bottom` as CARDINAL[4].
+      let extents: [c_ulong; 4] = [border as c_ulong, border as c_ulong, 0, border as c_ulong];
+      unsafe {
+        (xlib.XChangeProperty)(
+          display,
+          xid,
+          prop,
+          x11_dl::xlib::XA_CARDINAL,
+          32,
+          x11_dl::xlib::PropModeReplace,
+          extents.as_ptr() as *const u8,
+          4,
+        );
+      }
+    });
   }
 }
 

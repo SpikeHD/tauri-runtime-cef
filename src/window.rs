@@ -468,6 +468,7 @@ impl<T: UserEvent> WinitCefApp<T> {
     {
       appwindow.set_visible_on_all_workspaces(appwindow.attrs.visible_on_all_workspaces);
       appwindow.set_skip_taskbar(appwindow.attrs.skip_taskbar);
+      appwindow.sync_csd_frame_extents();
     }
 
     #[cfg(windows)]
@@ -643,7 +644,17 @@ impl<T: UserEvent> WinitCefApp<T> {
         })
       }
       WindowMessage::SetEnabled(value) => appwindow.set_enabled(value),
-      WindowMessage::SetResizable(value) => window.set_resizable(value),
+      WindowMessage::SetResizable(value) => {
+        window.set_resizable(value);
+        #[cfg(any(
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ))]
+        appwindow.sync_csd_frame_extents();
+      }
       WindowMessage::SetTitle(title) => window.set_title(&title),
       WindowMessage::Maximize => window.set_maximized(true),
       WindowMessage::Unmaximize => window.set_maximized(false),
@@ -651,7 +662,17 @@ impl<T: UserEvent> WinitCefApp<T> {
       WindowMessage::Unminimize => window.set_minimized(false),
       WindowMessage::Show => window.set_visible(true),
       WindowMessage::Hide => window.set_visible(false),
-      WindowMessage::SetDecorations(value) => window.set_decorations(value),
+      WindowMessage::SetDecorations(value) => {
+        window.set_decorations(value);
+        #[cfg(any(
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ))]
+        appwindow.sync_csd_frame_extents();
+      }
       WindowMessage::SetSize(size) => _ = window.request_surface_size(size),
       WindowMessage::SetPosition(position) => window.set_outer_position(position),
       WindowMessage::SetFullscreen(value) => {
