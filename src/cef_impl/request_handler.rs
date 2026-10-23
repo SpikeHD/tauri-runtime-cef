@@ -133,11 +133,16 @@ wrap_request_handler! {
   impl RequestHandler {
     fn on_render_process_terminated(
       &self,
-      _browser: Option<&mut Browser>,
+      browser: Option<&mut Browser>,
       _status: TerminationStatus,
       _error_code: ::std::os::raw::c_int,
       _error_string: Option<&CefString>,
     ) {
+      // Reload so a dead renderer doesn't leave a blank window
+      #[cfg(target_os = "linux")]
+      if let Some(browser) = browser {
+        browser.reload();
+      }
       if let Some(handler) = &self.web_content_process_terminate_handler {
         handler();
       }
