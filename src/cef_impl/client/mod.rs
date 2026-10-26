@@ -14,6 +14,7 @@ use crate::{
 };
 
 mod context_menu;
+pub(crate) mod csp;
 mod display;
 mod download;
 mod drag;

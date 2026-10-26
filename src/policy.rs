@@ -744,8 +744,28 @@ fn kinds_from_mask(mask: u32, table: &[(u32, PermissionKind)]) -> Vec<Permission
   kinds
 }
 
-/// A `window.open` / popup request routed through the policy set by
-/// [`set_popup_policy`].
+/// Whether CSP enforcement is bypassed for a webview
+#[derive(Debug)]
+pub struct BypassCspRequest<'a> {
+  /// Label of the tauri webview whose loads the policy is deciding for.
+  pub webview_label: &'a str,
+}
+
+type BypassCspPolicy = dyn Fn(&BypassCspRequest<'_>) -> bool + Send + Sync;
+
+static BYPASS_CSP_POLICY: OnceLock<Box<BypassCspPolicy>> = OnceLock::new();
+
+/// Sets the process-global CSP policy
+pub fn set_bypass_csp_policy(
+  policy: impl Fn(&BypassCspRequest<'_>) -> bool + Send + Sync + 'static,
+) {
+  let _ = BYPASS_CSP_POLICY.set(Box::new(policy));
+}
+
+pub(crate) fn csp_bypassed_for(request: &BypassCspRequest<'_>) -> bool {
+  BYPASS_CSP_POLICY.get().is_some_and(|policy| policy(request))
+}
+
 #[derive(Debug)]
 pub struct PopupRequest<'a> {
   /// Label of the tauri webview that initiated the popup.

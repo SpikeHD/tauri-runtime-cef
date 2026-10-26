@@ -477,6 +477,13 @@ impl<T: UserEvent> WinitCefApp<T> {
           devtools_protocol_handlers.clone(),
           pending_initial_loads.clone(),
         )));
+        // Arm before the real load: the bypass must be active for the first
+        // document.
+        if crate::policy::csp_bypassed_for(&crate::policy::BypassCspRequest {
+          webview_label: &label,
+        }) {
+          crate::cef_impl::client::csp::arm_csp_bypass(&browser, &devtools_protocol_handlers);
+        }
         load_initial_url_after_registering_initialization_scripts(
           &browser,
           &initialization_scripts,
