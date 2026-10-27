@@ -683,10 +683,6 @@ pub(crate) fn prompt_kinds(mask: u32) -> Vec<PermissionKind> {
       bits::CEF_PERMISSION_TYPE_LOOPBACK_NETWORK as u32,
       PermissionKind::LocalNetwork,
     ),
-    (
-      bits::CEF_PERMISSION_TYPE_SENSORS as u32,
-      PermissionKind::Sensors,
-    ),
   ];
   kinds_from_mask(mask, &table)
 }
